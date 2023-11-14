@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Bikini-Prozent</title>
+  <!-- Add Bootstrap CSS link -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col m-2">
+            <div id="successPercentage" class="mt-3"></div>
+            <div id="answeredCount" class="mt-3"></div>
+            <h2>Bikini-Prozent</h2>
+            <button id="generateBtn" class="btn btn-primary mt-3">Neu generieren</button>
+            
+            <div id="results" class="mt-4"></div>
+            
+        </div>
+        <div class="col m-2">
+            <!-- Add an ID to the image element for easier reference -->
+            <img id="randomImage" src="https://source.unsplash.com/400x600/?bikini" alt="" style="border-radius: 8px;">
+        </div>
+    </div>
+</div>
+
+<!-- Add jQuery and Bootstrap JS scripts -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  // Track success percentage and answered questions
+  var correctAttempts = 0;
+  var totalAttempts = 0;
+  var answeredQuestions = 0;
+  var questionAnswered = false;
+
+  $('#generateBtn').on('click', function() {
+    // Clear previous question, options, and results
+    $('#results .result').remove();
+    $('#results .question').remove();
+    $('#results .answerBtn').remove();
+
+    // Generate random number between 100 and 200
+    var randomNumber = Math.floor(Math.random() * (200 - 100 + 1)) + 100;
+
+    // Generate random percentage between 25 and 250
+    var randomPercentage = Math.floor(Math.random() * (250 - 25 + 1)) + 25;
+
+    // Calculate the result
+    var result = Math.round(randomNumber * (randomPercentage / 100));
+
+    // Generate two wrong answers
+    var wrongAnswer1 = Math.round(randomNumber * (Math.random() * 0.5));
+    var wrongAnswer2 = Math.round(randomNumber * (1 + Math.random()));
+
+    // Create a shuffled array of all three answers
+    var answers = [result, wrongAnswer1, wrongAnswer2];
+    answers.sort(() => Math.random() - 0.5);
+
+    // Display the question
+    $('#results').append('<p class="question">Was ist ' + randomPercentage + '% von ' + randomNumber + '?</p>');
+
+    // Create buttons for each answer
+    $.each(answers, function(index, value) {
+      $('#results').append('<button class="btn btn-info mr-2 answerBtn">' + value + '</button>');
+    });
+
+    // Add click event for answer buttons
+    $('.answerBtn').on('click', function() {
+      // Check if the question has been answered
+      if (!questionAnswered) {
+        // Check if the clicked answer is correct
+        var clickedAnswer = parseInt($(this).text());
+        if (clickedAnswer === result) {
+          $('#results').append('<div class="alert alert-success mt-3 result" role="alert">Richtig!</div>');
+          // Increment correct attempts and total attempts
+          correctAttempts++;
+          totalAttempts++;
+        } else {
+          $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Falsch! Die Richtige Antwort ist ' + result + '</div>');
+          // Increment only total attempts
+          totalAttempts++;
+        }
+
+        // Increment answered questions for every attempt
+        answeredQuestions++;
+
+        // Calculate and display success percentage
+        var successPercentage = (correctAttempts / totalAttempts) * 100;
+        $('#successPercentage').text('Erfolg Prozent: ' + successPercentage.toFixed(2) + '%');
+
+        // Display answered questions count
+        $('#answeredCount').text('Beantwortet: ' + answeredQuestions);
+
+        // Set the flag to indicate that the question has been answered
+        questionAnswered = true;
+      } else {
+        // Check if the "You already answered this question!" message has already been displayed
+        if ($('#results .alreadyAnswered').length === 0) {
+          // Display result for additional attempts
+          $('#results').append('<div class="alert alert-info mt-3 result alreadyAnswered" role="alert">ist schon beantwortet!</div>');
+        }
+      }
+    });
+
+    // Update the image source with a new random query parameter
+    $('#randomImage').attr('src', 'https://source.unsplash.com/400x600/?beauty&' + Math.random());
+    $('#randomImage').attr('style', 'border-radius: 8px');
+
+    // Reset the flag for the new question
+    questionAnswered = false;
+  });
+});
+</script>
+
+</body>
+</html>
