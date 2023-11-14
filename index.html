@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Bikini-Prozent</title>
+  <title>Bikini - Prozent</title>
   <!-- Add Bootstrap CSS link -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
@@ -11,18 +11,20 @@
 
 <div class="container mt-5">
     <div class="row">
-        <div class="col-md m-2">
-            <div id="successPercentage" class="mt-3"></div>
-            <div id="answeredCount" class="mt-3"></div>
-            <h2>Bikini-Prozent</h2>
-            <button id="generateBtn" class="btn btn-primary mt-3">Neu generieren</button>
+        <div class="col m-2">
+            <h2>Bikini - Prozent</h2>
+            <button id="startBtn" class="btn btn-success mt-3">Start & Restart</button>
+            <button id="stopBtn" class="btn btn-danger mt-3" disabled>Stoppen!</button>
             
             <div id="results" class="mt-4"></div>
-            
+            <div id="successPercentage" class="mt-3"></div>
+            <div id="answeredCount" class="mt-3"></div>
+            <div id="questionTimer" class="mt-3"></div>
+            <div id="testTimer" class="mt-3"></div>
         </div>
-        <div class="col-md m-2">
+        <div class="col m-2">
             <!-- Add an ID to the image element for easier reference -->
-            <img id="randomImage" src="https://source.unsplash.com/400x600/?bikini" alt="" class="rounded img-fluid">
+            <img id="randomImage" src="https://source.unsplash.com/600x800/?bikini,bikini,pcgames,gaming,server,cyber,vscode,javascript,hacker,php" alt="">
         </div>
     </div>
 </div>
@@ -39,8 +41,64 @@ $(document).ready(function() {
   var totalAttempts = 0;
   var answeredQuestions = 0;
   var questionAnswered = false;
+  var questionTimer;
+  var testTimer;
+  var testTimerStartTime;
+  var result; // Move result variable outside of generateQuestion function
 
-  $('#generateBtn').on('click', function() {
+  $('#startBtn').on('click', function() {
+    // Disable the Start button and enable the Stop button
+    $(this).prop('disabled', true);
+    $('#stopBtn').prop('disabled', false);
+
+    // Reset timers and counters
+    resetCounters();
+
+    // Start the overall test timer
+    startTestTimer();
+
+    // Generate the first question
+    generateQuestion();
+  });
+
+  $('#stopBtn').on('click', function() {
+    // Stop timers
+    clearInterval(questionTimer);
+    clearInterval(testTimer);
+
+    // Disable the Stop button
+    $(this).prop('disabled', true);
+
+    // Display the final results
+    displayFinalResults();
+  });
+
+  function resetCounters() {
+    // Reset timers and counters
+    clearInterval(questionTimer);
+    clearInterval(testTimer);
+    $('#questionTimer').text('');
+    $('#testTimer').text('');
+    correctAttempts = 0;
+    totalAttempts = 0;
+    answeredQuestions = 0;
+
+    // Reset counters in the HTML
+    $('#successPercentage').text('Erfolgsprozent: 0.00%');
+    $('#answeredCount').text('beantwortet: 0');
+  }
+
+  function startTestTimer() {
+    // Initialize the test timer
+    var testSeconds = 0;
+    testTimerStartTime = Date.now();
+    testTimer = setInterval(function() {
+      testSeconds++;
+      $('#testTimer').text('Gesamtezeit: ' + formatTime(testSeconds));
+    }, 1000);
+  }
+
+  function generateQuestion() {
     // Clear previous question, options, and results
     $('#results .result').remove();
     $('#results .question').remove();
@@ -53,7 +111,7 @@ $(document).ready(function() {
     var randomPercentage = Math.floor(Math.random() * (250 - 25 + 1)) + 25;
 
     // Calculate the result
-    var result = Math.round(randomNumber * (randomPercentage / 100));
+    result = Math.round(randomNumber * (randomPercentage / 100));
 
     // Generate two wrong answers
     var wrongAnswer1 = Math.round(randomNumber * (Math.random() * 0.5));
@@ -71,51 +129,123 @@ $(document).ready(function() {
       $('#results').append('<button class="btn btn-info mr-2 answerBtn">' + value + '</button>');
     });
 
+    // Start the question timer
+    startQuestionTimer();
+
     // Add click event for answer buttons
     $('.answerBtn').on('click', function() {
       // Check if the question has been answered
       if (!questionAnswered) {
+        // Stop the question timer
+        clearInterval(questionTimer);
+
         // Check if the clicked answer is correct
         var clickedAnswer = parseInt($(this).text());
         if (clickedAnswer === result) {
-          $('#results').append('<div class="alert alert-success mt-3 result" role="alert">Richtig!</div>');
+          $('#results').append('<div class="alert alert-success mt-3 result" role="alert">Richtig! ' + result + '</div>');
           // Increment correct attempts and total attempts
           correctAttempts++;
           totalAttempts++;
+          // Increment answered questions for every attempt
+          answeredQuestions++;
         } else {
-          $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Falsch! Die Richtige Antwort ist ' + result + '</div>');
-          // Increment only total attempts
+          $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Falsch! Die richtige Antwort ist ' + result + '</div>');
+          // Increment total attempts for every attempt
           totalAttempts++;
+          // Increment answered questions for every attempt (including wrong answers)
+          answeredQuestions++;
         }
-
-        // Increment answered questions for every attempt
-        answeredQuestions++;
 
         // Calculate and display success percentage
         var successPercentage = (correctAttempts / totalAttempts) * 100;
-        $('#successPercentage').text('Erfolg Prozent: ' + successPercentage.toFixed(2) + '%');
+        $('#successPercentage').text('erfolgsprozent: ' + successPercentage.toFixed(2) + '%');
 
         // Display answered questions count
-        $('#answeredCount').text('Beantwortet: ' + answeredQuestions);
+        $('#answeredCount').text('beantwortet: ' + answeredQuestions);
 
         // Set the flag to indicate that the question has been answered
         questionAnswered = true;
-      } else {
-        // Check if the "You already answered this question!" message has already been displayed
-        if ($('#results .alreadyAnswered').length === 0) {
-          // Display result for additional attempts
-          $('#results').append('<div class="alert alert-info mt-3 result alreadyAnswered" role="alert">ist schon beantwortet!</div>');
-        }
+
+        // Display result for 3 seconds
+        setTimeout(function() {
+          // Display next question after a short delay
+          generateQuestion();
+        }, 3000);
       }
     });
 
     // Update the image source with a new random query parameter
-    $('#randomImage').attr('src', 'https://source.unsplash.com/600x800/?bikini,bikini,vscode,php&' + Math.random());
-    $('#randomImage').addClass('img-fluid rounded');
+    $('#randomImage').attr('src', 'https://source.unsplash.com/600x800/?bikini,bikini,pcgames,gaming,server,cyber,vscode,javascript,hacker,php&' + Math.random());
 
     // Reset the flag for the new question
     questionAnswered = false;
-  });
+  }
+
+  function startQuestionTimer() {
+    // Initialize the question timer
+    var questionSeconds = 10;
+    $('#questionTimer').text('Time: ' + formatTime(questionSeconds)).css('color', 'red');
+    questionTimer = setInterval(function() {
+      questionSeconds--;
+      $('#questionTimer').text('Time: ' + formatTime(questionSeconds)).css('color', 'red');
+      if (questionSeconds <= 0) {
+        // If the user didn't answer, count it as a wrong answer
+        // Stop the question timer
+        clearInterval(questionTimer);
+
+        // Increment total attempts for every attempt (including wrong answers)
+        totalAttempts++;
+        
+        // Increment answered questions when the question is left unanswered
+        answeredQuestions++;
+
+        // Display the correct answer
+        $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Time is up! The correct answer is ' + result + '</div>');
+
+        // Calculate and display success percentage
+        var successPercentage = (correctAttempts / totalAttempts) * 100;
+        $('#successPercentage').text('erfolgsprozent: ' + successPercentage.toFixed(2) + '%');
+
+        // Display answered questions count
+        $('#answeredCount').text('beantwortet: ' + answeredQuestions);
+
+        // Display next question after a short delay
+        setTimeout(function() {
+          generateQuestion();
+        }, 3000);
+      }
+    }, 1000);
+  }
+
+  function formatTime(seconds) {
+    var minutes = Math.floor(seconds / 60);
+    var remainingSeconds = seconds % 60;
+    return (
+      (minutes < 10 ? '0' : '') +
+      minutes +
+      ':' +
+      (remainingSeconds < 10 ? '0' : '') +
+      remainingSeconds
+    );
+  }
+
+  function displayFinalResults() {
+    // Display the final results
+    $('#results').append('<div class="alert alert-info mt-3 result" role="alert">fertig!</div>');
+    $('#results').append('<div class="alert alert-success mt-3 result" role="alert">Richtige Antworte: ' + correctAttempts + '</div>');
+    $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Falsche Antworte: ' + (totalAttempts - correctAttempts) + '</div>');
+
+    // Display the total test time
+    var testSeconds = Math.floor((Date.now() - testTimerStartTime) / 1000);
+    $('#testTimer').text('Gesamtezeit: ' + formatTime(testSeconds)).css('color', 'black');
+
+    // Enable the Start/Restart button and disable the Stop button
+    $('#startBtn').prop('disabled', false);
+    $('#stopBtn').prop('disabled', true);
+
+    // Reset timers and counters
+    resetCounters();
+  }
 });
 </script>
 
