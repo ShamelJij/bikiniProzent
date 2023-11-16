@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Bikini - Prozent</title>
+  <title>Random Number Game</title>
   <!-- Add Bootstrap CSS link -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
@@ -12,25 +12,27 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-md m-2">
-            <h2>Bikini - Prozent</h2>
-            <button id="startBtn" class="btn btn-success mt-3">Start & Restart</button>
-            <button id="stopBtn" class="btn btn-danger mt-3" disabled>Stoppen!</button>
+            <h2>Random Number Game</h2>
+            <button id="startBtn" class="btn btn-success mt-3">Start / Restart Test</button>
+            <button id="stopBtn" class="btn btn-danger mt-3" disabled>Stop Test</button>
             
+            <!-- Initially hide the Success Percentage and Answered Questions divs -->
+            <div id="successPercentage" class="mt-3" style="display: none">Success Percentage: 0.00%</div>
+            <div id="answeredCount" class="mt-3" style="display: none">Answered Questions: 0</div>
+
             <div id="results" class="mt-4"></div>
-            <div id="successPercentage" class="mt-3"></div>
-            <div id="answeredCount" class="mt-3"></div>
             <div id="questionTimer" class="mt-3"></div>
             <div id="testTimer" class="mt-3"></div>
         </div>
         <div class="col-md m-2">
             <!-- Add an ID to the image element for easier reference -->
-            <img id="randomImage" src="https://source.unsplash.com/600x800/?bikini,bikini,pcgames,gaming,server,cyber,vscode,javascript,hacker,php" alt="" class="img-fluid rounded">
+            <img id="randomImage" src="https://source.unsplash.com/800x1000/?bikini" alt="" class="img-fluid rounded">
         </div>
     </div>
 </div>
 
 <!-- Add jQuery and Bootstrap JS scripts -->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.1.0.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
@@ -43,10 +45,15 @@ $(document).ready(function() {
   var questionAnswered = false;
   var questionTimer;
   var testTimer;
+  var bTimer;
   var testTimerStartTime;
   var result; // Move result variable outside of generateQuestion function
 
   $('#startBtn').on('click', function() {
+    // Initially hide the Success Percentage and Answered Questions divs
+    $('#successPercentage').show();
+    $('#answeredCount').show();
+
     // Disable the Start button and enable the Stop button
     $(this).prop('disabled', true);
     $('#stopBtn').prop('disabled', false);
@@ -66,8 +73,13 @@ $(document).ready(function() {
     clearInterval(questionTimer);
     clearInterval(testTimer);
 
-    // Disable the Stop button
+    // Hide the question and options
+    $('#results .question').hide();
+    $('#results .answerBtn').hide();
+
+    // Disable the Stop button and enable the Start/Restart button
     $(this).prop('disabled', true);
+    $('#startBtn').prop('disabled', false);
 
     // Display the final results
     displayFinalResults();
@@ -82,10 +94,13 @@ $(document).ready(function() {
     correctAttempts = 0;
     totalAttempts = 0;
     answeredQuestions = 0;
-
-    // Reset counters in the HTML
-    $('#successPercentage').text('Erfolgsprozent: 0.00%');
-    $('#answeredCount').text('beantwortet: 0');
+    // Clear UI
+    $('#results').empty();
+    // Show the image
+    $('#randomImage').show();
+    // Set success percentage and answered questions to zero
+    $('#successPercentage').text('Success Percentage: 0.00%');
+    $('#answeredCount').text('Answered Questions: 0');
   }
 
   function startTestTimer() {
@@ -94,7 +109,7 @@ $(document).ready(function() {
     testTimerStartTime = Date.now();
     testTimer = setInterval(function() {
       testSeconds++;
-      $('#testTimer').text('Gesamtezeit: ' + formatTime(testSeconds));
+      $('#testTimer').text('Total: ' + formatTime(testSeconds));
     }, 1000);
   }
 
@@ -122,11 +137,17 @@ $(document).ready(function() {
     answers.sort(() => Math.random() - 0.5);
 
     // Display the question
-    $('#results').append('<p class="question">Was ist ' + randomPercentage + '% von ' + randomNumber + '?</p>');
+    $('#results').append('<p class="question">What is ' + randomPercentage + '% of ' + randomNumber + '?</p>');
 
     // Create buttons for each answer
     $.each(answers, function(index, value) {
       $('#results').append('<button class="btn btn-info mr-2 answerBtn">' + value + '</button>');
+    });
+
+    // Change the image source when an answer is clicked
+    $('.answerBtn').on('click', function() {
+
+      
     });
 
     // Start the question timer
@@ -138,18 +159,18 @@ $(document).ready(function() {
       if (!questionAnswered) {
         // Stop the question timer
         clearInterval(questionTimer);
-
+        
         // Check if the clicked answer is correct
         var clickedAnswer = parseInt($(this).text());
         if (clickedAnswer === result) {
-          $('#results').append('<div class="alert alert-success mt-3 result" role="alert">Richtig! ' + result + '</div>');
+          $('#results').append('<div class="alert alert-success mt-3 result" role="alert">Correct! ' + result + '</div>');
           // Increment correct attempts and total attempts
           correctAttempts++;
           totalAttempts++;
           // Increment answered questions for every attempt
           answeredQuestions++;
         } else {
-          $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Falsch! Die richtige Antwort ist ' + result + '</div>');
+          $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Wrong! The correct answer is ' + result + '</div>');
           // Increment total attempts for every attempt
           totalAttempts++;
           // Increment answered questions for every attempt (including wrong answers)
@@ -158,36 +179,53 @@ $(document).ready(function() {
 
         // Calculate and display success percentage
         var successPercentage = (correctAttempts / totalAttempts) * 100;
-        $('#successPercentage').text('erfolgsprozent: ' + successPercentage.toFixed(2) + '%');
+        $('#successPercentage').text('Success Percentage: ' + successPercentage.toFixed(2) + '%');
 
         // Display answered questions count
-        $('#answeredCount').text('beantwortet: ' + answeredQuestions);
+        $('#answeredCount').text('Answered Questions: ' + answeredQuestions);
 
         // Set the flag to indicate that the question has been answered
         questionAnswered = true;
+        var bSeconds = 3;
+        $('#questionTimer').text('Next: ' + formatTime(bSeconds)).css('color', 'red');
+          bSeconds--;
+          
+        
+        bTimer = setInterval(function(){
+          if(bSeconds <= 0){
+            
+            clearInterval(bTimer);
+            $('#randomImage').attr('src', '');
+          }
+            $('#questionTimer').text('Next: ' + formatTime(bSeconds)).css('color', 'red');
+          bSeconds--;
+          
+        }, 1000);
 
         // Display result for 3 seconds
         setTimeout(function() {
+          // Hide the question and options
+          $('#results .question').hide();
+          $('#results .answerBtn').hide();
           // Display next question after a short delay
           generateQuestion();
         }, 3000);
       }
     });
 
-    // Update the image source with a new random query parameter
-    $('#randomImage').attr('src', 'https://source.unsplash.com/600x800/?bikini,bikini,pcgames,gaming,server,cyber,vscode,javascript,hacker,php&' + Math.random());
-
     // Reset the flag for the new question
     questionAnswered = false;
   }
 
   function startQuestionTimer() {
+    $('#randomImage').attr('src', getRandomImageLink());
     // Initialize the question timer
     var questionSeconds = 10;
-    $('#questionTimer').text('Time: ' + formatTime(questionSeconds)).css('color', 'red');
+    $('#questionTimer').text(formatTime(questionSeconds)).css('color', 'blue');
     questionTimer = setInterval(function() {
       questionSeconds--;
-      $('#questionTimer').text('Time: ' + formatTime(questionSeconds)).css('color', 'red');
+      
+      $('#questionTimer').text(formatTime(questionSeconds)).css('color', 'blue');
       if (questionSeconds <= 0) {
         // If the user didn't answer, count it as a wrong answer
         // Stop the question timer
@@ -204,11 +242,16 @@ $(document).ready(function() {
 
         // Calculate and display success percentage
         var successPercentage = (correctAttempts / totalAttempts) * 100;
-        $('#successPercentage').text('erfolgsprozent: ' + successPercentage.toFixed(2) + '%');
+        $('#successPercentage').text('Success Percentage: ' + successPercentage.toFixed(2) + '%');
 
         // Display answered questions count
-        $('#answeredCount').text('beantwortet: ' + answeredQuestions);
+        $('#answeredCount').text('Answered Questions: ' + answeredQuestions);
 
+        // Hide the question and options
+        $('#results .question').hide();
+        $('#results .answerBtn').hide();
+
+        console.log("timer red");
         // Display next question after a short delay
         setTimeout(function() {
           generateQuestion();
@@ -231,20 +274,25 @@ $(document).ready(function() {
 
   function displayFinalResults() {
     // Display the final results
-    $('#results').append('<div class="alert alert-info mt-3 result" role="alert">fertig!</div>');
-    $('#results').append('<div class="alert alert-success mt-3 result" role="alert">Richtige Antworte: ' + correctAttempts + '</div>');
-    $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Falsche Antworte: ' + (totalAttempts - correctAttempts) + '</div>');
+    $('#results').append('<div class="alert alert-info mt-3 result" role="alert">Test Completed!</div>');
+    $('#results').append('<div class="alert alert-success mt-3 result" role="alert">Correct Answers: ' + correctAttempts + '</div>');
+    $('#results').append('<div class="alert alert-danger mt-3 result" role="alert">Wrong Answers: ' + (totalAttempts - correctAttempts) + '</div>');
 
     // Display the total test time
     var testSeconds = Math.floor((Date.now() - testTimerStartTime) / 1000);
-    $('#testTimer').text('Gesamtezeit: ' + formatTime(testSeconds)).css('color', 'black');
+    $('#testTimer').text('Total: ' + formatTime(testSeconds)).css('color', 'black');
 
     // Enable the Start/Restart button and disable the Stop button
     $('#startBtn').prop('disabled', false);
     $('#stopBtn').prop('disabled', true);
+  }
 
-    // Reset timers and counters
-    resetCounters();
+  function getRandomImageLink() {
+    // Generate a random tag for the image URL
+    var links = ['https://images.unsplash.com/photo-1522990917584-2833706f6a48?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEyOTgwMg&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800', 'https://images.unsplash.com/photo-1582639760270-076335e93696?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEyOTg0OQ&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800', 'https://images.unsplash.com/photo-1500416149159-461f35b7e5da?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEyOTg3MQ&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800', 'https://images.unsplash.com/photo-1515161318750-781d6122e367?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEyOTg5Mw&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800', 'https://images.unsplash.com/photo-1525672716948-1f0bb9c49883?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEyOTkwOA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800','https://images.unsplash.com/photo-1606792109963-7b34205b1333?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEyOTk2Nw&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800','https://images.unsplash.com/photo-1519209124034-9836ac847d0d?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEzMDAwMw&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800','https://images.unsplash.com/photo-1570258028946-b9a55411d117?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEzMDAyMw&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800', 'https://images.unsplash.com/photo-1667052439465-3ff2811b8511?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEzMDA1NQ&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800','https://images.unsplash.com/photo-1530025468065-b26f2c0618b6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1000&ixid=MnwxfDB8MXxyYW5kb218MHx8YmlraW5pfHx8fHx8MTcwMDEzMDExMw&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=800'];
+    var randomIndex = Math.floor(Math.random() * links.length);
+    console.log(randomIndex);
+    return links[randomIndex];
   }
 });
 </script>
